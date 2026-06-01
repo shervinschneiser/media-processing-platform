@@ -1,12 +1,15 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "media-processing-platform"
-    debug: bool = True
 
-    class Config:
-        env_file = ".env"
+    app_name: str
+    database_url: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+    )
 
 
 settings = Settings()
