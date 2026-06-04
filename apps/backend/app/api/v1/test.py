@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.schemas.common import SuccessResponse
 
 router = APIRouter()
 
@@ -15,6 +16,4 @@ def test(
 ):
     db.execute(text("SELECT 1"))
 
-    return {
-        "status": "ok"
-    }
+    return SuccessResponse()
