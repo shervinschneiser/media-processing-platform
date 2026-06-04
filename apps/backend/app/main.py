@@ -6,24 +6,24 @@ from app.core.logging import logger
 from app.core.exceptions import (
     global_exception_handler
 )
-
-logger.info("application started!!!")
-
-
-
+from app.core.request_id import RequestIDMiddleware
 
 app = FastAPI(
     title=settings.app_name,
 )
 
 
-app.include_router(
-    test_router,
-    prefix="/api/v1",
-    tags=["test"],
-)
+app.add_middleware(RequestIDMiddleware)
 
 app.add_exception_handler(
     Exception,
     global_exception_handler,
+)
+
+logger.info("application started!!!")
+
+app.include_router(
+    test_router,
+    prefix="/api/v1",
+    tags=["test"],
 )
