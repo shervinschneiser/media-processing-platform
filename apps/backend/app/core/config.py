@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     redis_url: str
 
+    upload_dir: str
+
     debug: bool = False
 
     model_config = SettingsConfigDict(
