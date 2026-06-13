@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from pathlib import Path
+from uuid import uuid4
+from app.core.config import settings
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.job import Job
+from app.models.job import Job, JobStatus
 from app.schemas.job import JobResponse
 from app.core.celery_app import celery_app
 
@@ -18,8 +21,26 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
     return job
 
 @router.post("/jobs", response_model=JobResponse)
-def create_job(db: Session = Depends(get_db)):
-    job = Job()
+async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    # prepare storage
+    upload_dir = Path(settings.upload_dir)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    # generate file path
+    ext = Path(file.filename).suffix
+    filename = f"{uuid4()}{ext}"
+    file_path = upload_dir / filename
+
+    # save file
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+
+    # create job with file path
+    job = Job(
+        input_file_path=str(file_path),
+        status=JobStatus.PENDING
+    )
 
     db.add(job)
     db.commit()
