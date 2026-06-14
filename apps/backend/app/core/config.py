@@ -14,6 +14,8 @@ class Settings(BaseSettings):
 
     upload_dir: str
 
+    output_dir: str
+
     debug: bool = False
 
     model_config = SettingsConfigDict(
