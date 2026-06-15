@@ -20,7 +20,7 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 
     return job
 
-@router.post("/jobs", response_model=JobResponse)
+@router.post("/", response_model=JobResponse)
 async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
     # prepare storage

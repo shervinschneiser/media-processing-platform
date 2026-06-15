@@ -34,6 +34,6 @@ app.include_router(
 # jobs router
 app.include_router(
     jobs_router,
-    prefix="/api/v1",
+    prefix="/api/v1/jobs",
     tags=["jobs"],
 )
