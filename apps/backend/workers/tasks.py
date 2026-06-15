@@ -22,7 +22,6 @@ def process_job(job_id: int):
 
         input_path = Path(job.input_file_path)
         output_dir = Path(settings.output_dir)
-
         output_dir.mkdir(
             parents=True,
             exist_ok=True,
@@ -34,16 +33,23 @@ def process_job(job_id: int):
         job.status = JobStatus.PROCESSING
         db.commit()
 
-        subprocess.run(
+        result = subprocess.run(
             [
                 "ffmpeg",
-                "-i",
-                str(input_path),
-                str(output_path),
                 "-y",
+                "-i", str(input_path),
+                "-vn",
+                "-acodec", "libmp3lame",
+                "-q:a", "2",
+                str(output_path),
             ],
-            check=True,
+            capture_output=True,
+            text=True,
         )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"ffmpeg failed:\n{result.stderr}")
+
         
         job.output_file_path = str(output_path)
         job.status = JobStatus.COMPLETED
