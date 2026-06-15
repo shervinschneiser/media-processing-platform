@@ -8,11 +8,26 @@ services:
       - "8000:8000"
 
     env_file:
-      - ./apps/backend/.env
+      - ./apps/backend/.env.docker
 
     depends_on:
       - postgres
       - redis
+    
+    volumes:
+      - ./storage:/app/storage
+
+  worker:
+    build:
+      context: ./apps/backend
+    command: celery -A workers.tasks worker --loglevel=info
+    env_file:
+      - ./apps/backend/.env.docker
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./storage:/app/storage
 
   frontend:
     build:
