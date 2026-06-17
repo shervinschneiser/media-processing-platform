@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from pathlib import Path
 from uuid import uuid4
 from app.core.config import settings
@@ -50,3 +51,28 @@ async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)
     celery_app.send_task("process_job", args=[job.id])
 
     return job
+
+
+@router.get("/{job_id}/download")
+def download_job_output(job_id: int, db: Session = Depends(get_db)):
+    job = db.get(Job, job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if job.status != JobStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail=f"Job is not completed (status: {job.status})")
+
+    if not job.output_file_path:
+        raise HTTPException(status_code=404, detail="Output file not found")
+
+    output_path = Path(job.output_file_path)
+
+    if not output_path.exists():
+        raise HTTPException(status_code=404, detail="Output file missing from disk")
+
+    return FileResponse(
+        path=output_path,
+        media_type="audio/mpeg",
+        filename=f"job_{job.uuid}.mp3",
+    )
