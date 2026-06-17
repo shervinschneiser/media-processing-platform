@@ -24,6 +24,15 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=JobResponse)
 async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
+    # check file format
+    ALLOWED_EXTENSIONS = {".mp4"}
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported file type '{ext}'. Only .mp4 is accepted.",
+        )
+
     # prepare storage
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
