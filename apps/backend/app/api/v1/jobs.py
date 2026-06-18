@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import status as http_status
 from fastapi.responses import FileResponse
 from pathlib import Path
+import os
 from uuid import uuid4
 from app.core.config import settings
 from sqlalchemy.orm import Session
@@ -112,3 +114,23 @@ def list_jobs(
         page=page,
         page_size=page_size,
     )
+
+@router.delete("/{job_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+def delete_job(job_id: int, db: Session = Depends(get_db)):
+    job = db.get(Job, job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if job.status == JobStatus.PROCESSING:
+        raise HTTPException(status_code=400, detail="Cannot delete a job that is currently processing")
+
+    # delete files from disc
+    for path_str in [job.input_file_path, job.output_file_path]:
+        if path_str:
+            path = Path(path_str)
+            if path.exists():
+                path.unlink()
+
+    db.delete(job)
+    db.commit()
