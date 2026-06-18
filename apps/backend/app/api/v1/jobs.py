@@ -4,11 +4,14 @@ from pathlib import Path
 from uuid import uuid4
 from app.core.config import settings
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.db.session import get_db
 from app.models.job import Job, JobStatus
 from app.schemas.job import JobResponse
+from app.schemas.job import JobListResponse
 from app.core.celery_app import celery_app
+
 
 router = APIRouter()
 
@@ -84,4 +87,28 @@ def download_job_output(job_id: int, db: Session = Depends(get_db)):
         path=output_path,
         media_type="audio/mpeg",
         filename=f"job_{job.uuid}.mp3",
+    )
+
+
+@router.get("/", response_model=JobListResponse)
+def list_jobs(
+    page: int = 1,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+):
+    if page < 1:
+        raise HTTPException(status_code=422, detail="page must be >= 1")
+    if page_size < 1 or page_size > 100:
+        raise HTTPException(status_code=422, detail="page_size must be between 1 and 100")
+
+    offset = (page - 1) * page_size
+
+    total = db.scalar(func.count(Job.id))
+    jobs = db.query(Job).order_by(Job.created_at.desc()).offset(offset).limit(page_size).all()
+
+    return JobListResponse(
+        items=jobs,
+        total=total,
+        page=page,
+        page_size=page_size,
     )

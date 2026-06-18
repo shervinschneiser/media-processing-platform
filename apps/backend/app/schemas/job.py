@@ -24,3 +24,11 @@ class JobDetailResponse(BaseModel):
     uuid: str
     status: str
     error_message: str | None = None
+
+
+class JobListResponse(BaseModel):
+    items: list[JobResponse]
+    total: int
+    page: int
+    page_size: int
+
