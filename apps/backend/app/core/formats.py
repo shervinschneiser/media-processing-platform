@@ -12,7 +12,7 @@ FORMAT_MAP: dict[str, tuple[JobType, list[str]]] = {
     # audio
     "mp3":  (JobType.AUDIO, ["wav", "ogg", "flac"]),
     "wav":  (JobType.AUDIO, ["mp3", "ogg", "flac"]),
-    "flac": (JobType.AUDIO, ["mp3", "wav"]),
+    "flac": (JobType.AUDIO, ["mp3", "wav", "ogg"]),
 
     # image
     "png":  (JobType.IMAGE, ["jpg", "webp", "avif", "gif", "pdf"]),
