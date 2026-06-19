@@ -16,7 +16,8 @@ services:
     
     volumes:
       - ./storage:/app/storage
-
+      - ./apps/backend:/app
+      
   worker:
     build:
       context: ./apps/backend
@@ -28,6 +29,7 @@ services:
       - redis
     volumes:
       - ./storage:/app/storage
+      - ./apps/backend:/app
 
   frontend:
     build:
