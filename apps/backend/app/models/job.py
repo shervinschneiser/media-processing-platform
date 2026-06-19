@@ -14,6 +14,11 @@ class JobStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+class JobType(str, Enum):
+    VIDEO = "video"
+    AUDIO = "audio"
+    IMAGE = "image"
+    DOCUMENT = "document"
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -30,6 +35,21 @@ class Job(Base):
     status: Mapped[JobStatus] = mapped_column(
         SqlEnum(JobStatus),
         default=JobStatus.PENDING,
+        nullable=False,
+    )
+
+    job_type: Mapped[JobType] = mapped_column(
+        SqlEnum(JobType),
+        nullable=False,
+    )
+
+    input_format: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    output_format: Mapped[str] = mapped_column(
+        String(16),
         nullable=False,
     )
 
