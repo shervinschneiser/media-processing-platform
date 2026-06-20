@@ -10,6 +10,9 @@ class JobResponse(BaseModel):
     id: int
     uuid: str
     status: str
+    job_type: str
+    input_format: str
+    output_format: str
     input_file_path: str | None = None
     output_file_path: str | None = None
     error_message: str | None = None
