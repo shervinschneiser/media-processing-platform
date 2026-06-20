@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi import status as http_status
 from fastapi.responses import FileResponse
 from pathlib import Path
@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.job import Job, JobStatus
 from app.schemas.job import JobResponse
 from app.schemas.job import JobListResponse
+from app.core.formats import get_job_type, is_conversion_supported
 from app.core.celery_app import celery_app
 
 
@@ -27,15 +28,30 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
     return job
 
 @router.post("/", response_model=JobResponse)
-async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_job(
+    file: UploadFile = File(...),
+    output_format: str = Form(...),
+    db: Session = Depends(get_db),
+):
 
     # check file format
-    ALLOWED_EXTENSIONS = {".mp4"}
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
+    input_format = Path(file.filename).suffix.lstrip(".").lower()
+
+    if not input_format:
+        raise HTTPException(status_code=422, detail="File has no extension")
+
+    try:
+        job_type = get_job_type(input_format)
+    except ValueError:
         raise HTTPException(
             status_code=422,
-            detail=f"Unsupported file type '{ext}'. Only .mp4 is accepted.",
+            detail=f"Unsupported input format: '{input_format}'",
+        )
+
+    if not is_conversion_supported(input_format, output_format):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Cannot convert '{input_format}' to '{output_format}'",
         )
 
     # prepare storage
@@ -43,8 +59,7 @@ async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     # generate file path
-    ext = Path(file.filename).suffix
-    filename = f"{uuid4()}{ext}"
+    filename = f"{uuid4()}.{input_format}"
     file_path = upload_dir / filename
 
     # save file
@@ -54,7 +69,10 @@ async def create_job(file: UploadFile = File(...), db: Session = Depends(get_db)
     # create job with file path
     job = Job(
         input_file_path=str(file_path),
-        status=JobStatus.PENDING
+        job_type=job_type,
+        input_format=input_format,
+        output_format=output_format.lower(),
+        status=JobStatus.PENDING,
     )
 
     db.add(job)
