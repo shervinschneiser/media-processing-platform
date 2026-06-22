@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from PIL import Image
+from pdf2image import convert_from_path
 
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
@@ -63,8 +64,19 @@ def _process_image(input_path: Path, output_path: Path, output_format: str) -> N
 
 
 def _process_document(input_path: Path, output_path: Path, output_format: str) -> None:
-    # pdf -> png/jpg : only first page for now
-    raise NotImplementedError("PDF to image conversion not implemented yet")
+    if output_format not in ("png", "jpg", "jpeg"):
+        raise ValueError(f"Unsupported document output format: {output_format}")
+
+    pages = convert_from_path(str(input_path), dpi=200)
+
+    if not pages:
+        raise RuntimeError("PDF has no pages to convert")
+
+    # only convert first page for now
+    first_page = pages[0]
+
+    save_format = "JPEG" if output_format in ("jpg", "jpeg") else "PNG"
+    first_page.convert("RGB").save(output_path, save_format)
 
 
 @celery_app.task(name="process_job")
