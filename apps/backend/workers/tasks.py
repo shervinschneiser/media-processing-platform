@@ -78,6 +78,7 @@ def _process_document(input_path: Path, output_path: Path, output_format: str) -
     save_format = "JPEG" if output_format in ("jpg", "jpeg") else "PNG"
     first_page.convert("RGB").save(output_path, save_format)
 
+PERMANENT_ERRORS = (FileNotFoundError, ValueError, NotImplementedError)
 
 @celery_app.task(
     name="process_job",
@@ -96,6 +97,10 @@ def process_job(self, job_id: int):
             return
 
         input_path = Path(job.input_file_path)
+
+        if not input_path.exists():
+            raise FileNotFoundError(f"Input file not found: {input_path}")
+
         output_dir = Path(settings.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -120,6 +125,14 @@ def process_job(self, job_id: int):
         job.output_file_path = str(output_path)
         job.status = JobStatus.COMPLETED
         db.commit()
+
+    except PERMANENT_ERRORS as exc:
+        # retry won't help:)
+        if job:
+            job.status = JobStatus.FAILED
+            job.error_message = str(exc)
+            db.commit()
+        raise
 
     except Exception as exc:
         if self.request.retries < self.max_retries:
