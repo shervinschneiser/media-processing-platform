@@ -79,8 +79,13 @@ def _process_document(input_path: Path, output_path: Path, output_format: str) -
     first_page.convert("RGB").save(output_path, save_format)
 
 
-@celery_app.task(name="process_job")
-def process_job(job_id: int):
+@celery_app.task(
+    name="process_job",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=10,
+)
+def process_job(self, job_id: int):
     db = SessionLocal()
     job = None
     
@@ -117,11 +122,16 @@ def process_job(job_id: int):
         db.commit()
 
     except Exception as exc:
+        if self.request.retries < self.max_retries:
+            # exponential backoff: 10s, 20s, 40s
+            countdown = self.default_retry_delay * (2 ** self.request.retries)
+            raise self.retry(exc=exc, countdown=countdown)
+
+        # end of all retries (Failed)
         if job:
             job.status = JobStatus.FAILED
             job.error_message = str(exc)
             db.commit()
-
         raise
 
     finally:
