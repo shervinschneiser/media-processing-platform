@@ -14,6 +14,11 @@ from app.schemas.job import JobResponse
 from app.schemas.job import JobListResponse
 from app.core.formats import get_job_type, is_conversion_supported
 from app.core.celery_app import celery_app
+from app.core.file_validation import (
+    detect_mime_type,
+    is_mime_consistent_with_extension,
+    MAX_FILE_SIZE_BYTES,
+)
 
 
 router = APIRouter()
@@ -52,6 +57,24 @@ async def create_job(
         raise HTTPException(
             status_code=422,
             detail=f"Cannot convert '{input_format}' to '{output_format}'",
+        )
+
+    # check file size
+    file_bytes = await file.read()
+
+    max_size = MAX_FILE_SIZE_BYTES.get(job_type.value, 100 * 1024 * 1024)
+    if len(file_bytes) > max_size:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Max size for {job_type.value}: {max_size // (1024*1024)}MB",
+        )
+
+    # check MIME type
+    mime_type = detect_mime_type(file_bytes)
+    if not is_mime_consistent_with_extension(mime_type, input_format):
+        raise HTTPException(
+            status_code=422,
+            detail=f"File content does not match declared extension '.{input_format}' (detected: {mime_type})",
         )
 
     # prepare storage
