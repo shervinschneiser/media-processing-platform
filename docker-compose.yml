@@ -1,69 +1,76 @@
 services:
+    backend:
+        build:
+            context: ./apps/backend
 
-  backend:
-    build:
-      context: ./apps/backend
+        ports:
+            - "8000:8000"
 
-    ports:
-      - "8000:8000"
+        env_file:
+            - ./apps/backend/.env.docker
 
-    env_file:
-      - ./apps/backend/.env.docker
+        depends_on:
+            - postgres
+            - redis
 
-    depends_on:
-      - postgres
-      - redis
-    
-    volumes:
-      - ./storage:/app/storage
-      - ./apps/backend:/app
-      
-  worker:
-    build:
-      context: ./apps/backend
-    command: celery -A workers.tasks worker --loglevel=info
-    env_file:
-      - ./apps/backend/.env.docker
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./storage:/app/storage
-      - ./apps/backend:/app
+        volumes:
+            - ./storage:/app/storage
+            - ./apps/backend:/app
 
-  frontend:
-    build:
-      context: ./apps/frontend
+    worker:
+        build:
+            context: ./apps/backend
+        command: celery -A workers.tasks worker --loglevel=info
+        env_file:
+            - ./apps/backend/.env.docker
+        depends_on:
+            - postgres
+            - redis
+        volumes:
+            - ./storage:/app/storage
+            - ./apps/backend:/app
 
-    ports:
-      - "3000:3000"
+    frontend:
+        build:
+            context: ./apps/frontend
 
-    depends_on:
-      - backend
+        ports:
+            - "3000:3000"
 
-  postgres:
-    image: postgres:17
+        environment:
+            - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: media_platform
+        volumes:
+            - ./apps/frontend:/app
+            - /app/node_modules
+            - /app/.next
 
-    ports:
-      - "5432:5432"
+        depends_on:
+            - backend
 
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    postgres:
+        image: postgres:17
 
-  redis:
-    image: redis:7-alpine
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: media_platform
 
-    ports:
-      - "6379:6379"
+        ports:
+            - "5432:5432"
 
-    volumes:
-      - redis_data:/data
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    redis:
+        image: redis:7-alpine
+
+        ports:
+            - "6379:6379"
+
+        volumes:
+            - redis_data:/data
 
 volumes:
-  postgres_data:
-  redis_data:
+    postgres_data:
+    redis_data:
