@@ -1,20 +1,8 @@
+import { Job } from "@/app/types";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
-export type JobStatus = "pending" | "processing" | "completed" | "failed";
-
-export interface Job {
-  id: number;
-  uuid: string;
-  status: JobStatus;
-  job_type: string;
-  input_format: string;
-  output_format: string;
-  input_file_path: string | null;
-  output_file_path: string | null;
-  error_message: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type { Job, JobStatus, JobType, PaginatedJobsResponse } from "@/app/types";
 
 export interface SupportedTargetsResponse {
   input_format: string;

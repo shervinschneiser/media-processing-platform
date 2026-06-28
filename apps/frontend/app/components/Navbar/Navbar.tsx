@@ -6,7 +6,7 @@ interface NavbarProps {
   onTabChange: (tab: "upload" | "history") => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
   return (
     <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -28,8 +28,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
           <button
             onClick={() => onTabChange("upload")}
             className={`px-3.5 py-2 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${currentTab === "upload"
-                ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 border border-transparent"
+              ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 border border-transparent"
               }`}
           >
             <UploadCloud className="h-4 w-4" />
@@ -39,8 +39,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
           <button
             onClick={() => onTabChange("history")}
             className={`px-3.5 py-2 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${currentTab === "history"
-                ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 border border-transparent"
+              ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 border border-transparent"
               }`}
           >
             <History className="h-4 w-4" />
@@ -51,3 +51,5 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
     </header>
   );
 };
+
+export default Navbar
