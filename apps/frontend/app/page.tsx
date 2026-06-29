@@ -48,7 +48,18 @@ export default function Home() {
       <main className="flex-1 pb-16">
         {currentTab === "upload" ? <UploadConvert /> : <JobHistory />}
       </main>
-
+      <footer className="border-t border-slate-900 bg-slate-950 py-8 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-400">MediaConverter</span>
+            <span>•</span>
+            <span>Media Converter</span>
+          </div>
+          <div className="text-slate-500">
+            Supports Video, Audio, Image & Document processing
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
